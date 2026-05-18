@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ebolavirus Genomic Sequence & Metadata Comparator</title>
+    <title>Ebolavirus Genomic Analysis: Deep Dive</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans leading-relaxed flex flex-col min-h-screen">
 
     <header class="bg-slate-900 text-white py-8 text-center shadow-md">
-        <h1 class="text-3xl font-bold">Ebolavirus Genomic Analysis</h1>
+        <h1 class="text-3xl font-bold">Ebolavirus Genomic Deep Dive</h1>
         <p class="mt-2 text-slate-300">Live Browser-Based Analysis of BDBV, SUDV, and EBOV</p>
     </header>
 
@@ -17,8 +18,6 @@
         
         <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
             <h2 class="text-xl font-bold text-blue-800 border-b pb-2 mb-4">Analyzed Sequences & Attribution</h2>
-            <p class="text-slate-600 mb-4">Metadata for the primary sequences used in this comparison. We gratefully acknowledge the submitting laboratories for generating this data.</p>
-            
             <div class="overflow-x-auto">
                 <table class="min-w-full text-left border-collapse text-sm">
                     <thead>
@@ -31,34 +30,50 @@
                         </tr>
                     </thead>
                     <tbody id="metadata-table" class="divide-y divide-slate-200">
-                        <tr>
-                            <td colspan="5" class="py-4 px-4 text-center text-slate-500" id="meta-loading-msg">Loading metadata...</td>
-                        </tr>
+                        <tr><td colspan="5" class="py-4 px-4 text-center text-slate-500">Loading metadata...</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
         <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-            <h2 class="text-xl font-bold text-blue-800 border-b pb-2 mb-4">Pairwise Sequence Identity</h2>
-            <p class="text-slate-600 mb-4">Calculates the percentage of identical nucleotides between the aligned consensus sequences, ignoring gaps and ambiguous reads.</p>
+            <h2 class="text-xl font-bold text-blue-800 border-b pb-2 mb-4">Genome-Wide Divergence (BDBV vs. EBOV Zaire)</h2>
+            <p class="text-slate-600 mb-4 text-sm">This chart represents a "sliding window" analysis across the ~19,000 base pair genome. It calculates the percentage of identical nucleotides in 500-base chunks. Dips in the line indicate regions of high mutation (hypervariable regions).</p>
             
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-100 border-b-2 border-slate-300">
-                            <th class="py-3 px-4 font-semibold">Comparison</th>
-                            <th class="py-3 px-4 font-semibold">Identity (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="results-table" class="divide-y divide-slate-200">
-                        <tr>
-                            <td colspan="2" class="py-4 px-4 text-center text-slate-500" id="seq-loading-msg">Loading and analyzing sequences...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="w-full h-80">
+                <canvas id="slidingWindowChart"></canvas>
             </div>
         </section>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                <h2 class="text-xl font-bold text-blue-800 border-b pb-2 mb-4">Overall Identity</h2>
+                <table class="min-w-full text-left border-collapse text-sm">
+                    <tbody id="results-table" class="divide-y divide-slate-200">
+                        <tr><td colspan="2" class="py-4 px-4 text-center text-slate-500">Analyzing sequences...</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                <h2 class="text-xl font-bold text-blue-800 border-b pb-2 mb-4">First 15 SNPs (BDBV vs. EBOV)</h2>
+                <p class="text-slate-600 mb-4 text-xs">A snapshot of the first 15 Single Nucleotide Polymorphisms detected in the alignment.</p>
+                <div class="overflow-y-auto max-h-64">
+                    <table class="min-w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 border-b">
+                                <th class="py-2 px-4 font-semibold">Position</th>
+                                <th class="py-2 px-4 font-semibold">Zaire (Reference)</th>
+                                <th class="py-2 px-4 font-semibold">Bundibugyo (Query)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="snp-table" class="divide-y divide-slate-200">
+                            <tr><td colspan="3" class="py-2 px-4 text-center text-slate-500">Scanning for SNPs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
 
     </main>
 
@@ -72,7 +87,7 @@
     </footer>
 
     <script>
-        // --- FASTA Parsing Logic ---
+        // --- Parsing Functions ---
         function parseFasta(text) {
             const sequences = [];
             let currentSeq = "";
@@ -91,37 +106,18 @@
             return sequences;
         }
 
-        function calculateIdentity(seq1, seq2) {
-            let matches = 0;
-            let validLength = 0;
-            const minLength = Math.min(seq1.length, seq2.length);
-            for (let i = 0; i < minLength; i++) {
-                const a = seq1[i], b = seq2[i];
-                if (a !== '-' && b !== '-' && a !== 'N' && b !== 'N') {
-                    validLength++;
-                    if (a === b) matches++;
-                }
-            }
-            return validLength === 0 ? "0.00" : ((matches / validLength) * 100).toFixed(2);
-        }
-
-        // --- TSV Parsing Logic ---
         function parseTSV(text) {
             const lines = text.split('\n').filter(line => line.trim() !== '');
             if (lines.length < 2) return null;
-            
             const headers = lines[0].split('\t').map(h => h.trim().toLowerCase());
             const firstRow = lines[1].split('\t');
-            
-            // Map common metadata columns to indices
-            const getCol = (possibleNames) => {
-                for (let name of possibleNames) {
-                    const idx = headers.findIndex(h => h.includes(name));
+            const getCol = (names) => {
+                for (let n of names) {
+                    const idx = headers.findIndex(h => h.includes(n));
                     if (idx !== -1) return firstRow[idx];
                 }
                 return "Unknown";
             };
-
             return {
                 strain: getCol(['strain', 'name', 'virus_name']),
                 date: getCol(['date', 'collection_date']),
@@ -130,36 +126,81 @@
             };
         }
 
+        // --- Deep Dive Analysis Functions ---
+        function calculateIdentity(seq1, seq2) {
+            let matches = 0, validLength = 0;
+            const minLength = Math.min(seq1.length, seq2.length);
+            for (let i = 0; i < minLength; i++) {
+                if (seq1[i] !== '-' && seq2[i] !== '-' && seq1[i] !== 'N' && seq2[i] !== 'N') {
+                    validLength++;
+                    if (seq1[i] === seq2[i]) matches++;
+                }
+            }
+            return validLength === 0 ? "0.00" : ((matches / validLength) * 100).toFixed(2);
+        }
+
+        function calculateSlidingWindow(seq1, seq2, windowSize = 500) {
+            const identities = [];
+            const labels = [];
+            const minLength = Math.min(seq1.length, seq2.length);
+            
+            for (let i = 0; i < minLength; i += windowSize) {
+                let matches = 0, valid = 0;
+                for (let j = i; j < i + windowSize && j < minLength; j++) {
+                    if (seq1[j] !== '-' && seq2[j] !== '-' && seq1[j] !== 'N' && seq2[j] !== 'N') {
+                        valid++;
+                        if (seq1[j] === seq2[j]) matches++;
+                    }
+                }
+                identities.push(valid === 0 ? null : (matches / valid) * 100);
+                labels.push(`${i}`);
+            }
+            return { labels, identities };
+        }
+
+        function findSNPs(refSeq, querySeq, limit = 15) {
+            const snps = [];
+            const minLength = Math.min(refSeq.length, querySeq.length);
+            for (let i = 0; i < minLength; i++) {
+                const r = refSeq[i];
+                const q = querySeq[i];
+                if (r !== q && r !== '-' && q !== '-' && r !== 'N' && q !== 'N') {
+                    snps.push({ position: i + 1, ref: r, query: q });
+                    if (snps.length >= limit) break;
+                }
+            }
+            return snps;
+        }
+
+        // --- Main Execution ---
         async function runAnalysis() {
             try {
-                // 1. Fetch Data
                 const [resBDBV_seq, resSUDV_seq, resEBOV_seq, resBDBV_meta, resSUDV_meta, resEBOV_meta] = await Promise.allSettled([
                     fetch('data/ebola-bdbv_aligned-nuc_2026-05-18T1850.fasta'),
                     fetch('data/ebola-sudan_aligned-nuc_2026-05-18T1850.fasta'),
                     fetch('data/ebola-zaire_aligned-nuc_2026-05-18T1851.fasta'),
                     fetch('data/ebola-bdbv_metadata_2026-05-18T1849.tsv'),
                     fetch('data/ebola-sudan_metadata_2026-05-18T1849.tsv'),
-                    fetch('data/ebola-zaire_metadata.tsv') // Assumed filename for your future upload
+                    fetch('data/ebola-zaire_metadata.tsv')
                 ]);
 
-                // 2. Process Metadata
+                // 1. Process Metadata
                 const metaTable = document.getElementById('metadata-table');
                 let metaHTML = "";
-
                 const processMeta = async (res, variantName) => {
                     if (res.status === 'fulfilled' && res.value.ok) {
-                        const metaData = parseTSV(await res.value.text());
-                        if (metaData) {
+                        const data = parseTSV(await res.value.text());
+                        if (data) {
                             return `<tr>
                                 <td class="py-2 px-4 font-semibold text-slate-800">${variantName}</td>
-                                <td class="py-2 px-4 font-mono text-xs text-slate-600">${metaData.strain}</td>
-                                <td class="py-2 px-4">${metaData.date}</td>
-                                <td class="py-2 px-4">${metaData.location}</td>
-                                <td class="py-2 px-4 text-blue-800 italic">${metaData.lab}</td>
+                                <td class="py-2 px-4 font-mono text-xs text-slate-600">${data.strain}</td>
+                                <td class="py-2 px-4">${data.date}</td>
+                                <td class="py-2 px-4">${data.location}</td>
+                                <td class="py-2 px-4 text-blue-800 italic">${data.lab}</td>
                             </tr>`;
                         }
                     }
-                    return `<tr><td class="py-2 px-4 font-semibold text-slate-800">${variantName}</td><td colspan="4" class="py-2 px-4 text-slate-400 italic">Metadata file missing or unreadable</td></tr>`;
+                    return `<tr><td class="py-2 px-4 font-semibold text-slate-800">${variantName}</td><td colspan="4" class="py-2 px-4 text-slate-400 italic">Metadata file missing</td></tr>`;
                 };
 
                 metaHTML += await processMeta(resBDBV_meta, "Bundibugyo (BDBV)");
@@ -167,37 +208,57 @@
                 metaHTML += await processMeta(resEBOV_meta, "Zaire (EBOV)");
                 metaTable.innerHTML = metaHTML;
 
-                // 3. Process Sequences
-                const parseSeq = async (res) => {
-                    if (res.status === 'fulfilled' && res.value.ok) {
-                        return parseFasta(await res.value.text())[0];
-                    }
-                    return null;
-                };
-
+                // 2. Process Sequences
+                const parseSeq = async (res) => (res.status === 'fulfilled' && res.value.ok) ? parseFasta(await res.value.text())[0] : null;
                 const seqBDBV = await parseSeq(resBDBV_seq);
                 const seqSUDV = await parseSeq(resSUDV_seq);
                 const seqEBOV = await parseSeq(resEBOV_seq);
 
-                const seqTable = document.getElementById('results-table');
-                
                 if (seqBDBV && seqSUDV && seqEBOV) {
-                    seqTable.innerHTML = `
-                        <tr>
-                            <td class="py-3 px-4 text-slate-800">BDBV vs. SUDV</td>
-                            <td class="py-3 px-4 font-mono text-blue-600 font-semibold">${calculateIdentity(seqBDBV.seq, seqSUDV.seq)}%</td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-800">BDBV vs. EBOV (Zaire)</td>
-                            <td class="py-3 px-4 font-mono text-blue-600 font-semibold">${calculateIdentity(seqBDBV.seq, seqEBOV.seq)}%</td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-800">SUDV vs. EBOV (Zaire)</td>
-                            <td class="py-3 px-4 font-mono text-blue-600 font-semibold">${calculateIdentity(seqSUDV.seq, seqEBOV.seq)}%</td>
-                        </tr>
+                    // Overall Identity
+                    document.getElementById('results-table').innerHTML = `
+                        <tr><td class="py-3 px-4">BDBV vs. SUDV</td><td class="py-3 px-4 font-mono text-blue-600 font-semibold">${calculateIdentity(seqBDBV.seq, seqSUDV.seq)}%</td></tr>
+                        <tr><td class="py-3 px-4">BDBV vs. EBOV</td><td class="py-3 px-4 font-mono text-blue-600 font-semibold">${calculateIdentity(seqBDBV.seq, seqEBOV.seq)}%</td></tr>
+                        <tr><td class="py-3 px-4">SUDV vs. EBOV</td><td class="py-3 px-4 font-mono text-blue-600 font-semibold">${calculateIdentity(seqSUDV.seq, seqEBOV.seq)}%</td></tr>
                     `;
+
+                    // SNPs
+                    const snps = findSNPs(seqEBOV.seq, seqBDBV.seq, 15);
+                    const snpHTML = snps.map(s => `<tr>
+                        <td class="py-2 px-4 font-mono text-slate-600">${s.position}</td>
+                        <td class="py-2 px-4 font-mono font-bold text-red-600">${s.ref}</td>
+                        <td class="py-2 px-4 font-mono font-bold text-green-600">${s.query}</td>
+                    </tr>`).join('');
+                    document.getElementById('snp-table').innerHTML = snpHTML || `<tr><td colspan="3" class="py-2 px-4 text-center">No SNPs found in this window.</td></tr>`;
+
+                    // Sliding Window Chart
+                    const windowData = calculateSlidingWindow(seqBDBV.seq, seqEBOV.seq, 500);
+                    new Chart(document.getElementById('slidingWindowChart').getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: windowData.labels,
+                            datasets: [{
+                                label: '% Identity (500bp windows)',
+                                data: windowData.identities,
+                                borderColor: 'rgb(37, 99, 235)',
+                                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { min: 40, max: 100, title: { display: true, text: 'Identity (%)' } },
+                                x: { title: { display: true, text: 'Genome Position (bp)' } }
+                            }
+                        }
+                    });
                 } else {
-                    seqTable.innerHTML = `<tr><td colspan="2" class="py-4 px-4 text-center text-red-500">Error: Could not load one or more FASTA files. Check file paths.</td></tr>`;
+                    document.getElementById('results-table').innerHTML = `<tr><td colspan="2" class="py-4 px-4 text-center text-red-500">Error: Could not load FASTAs.</td></tr>`;
+                    document.getElementById('snp-table').innerHTML = `<tr><td colspan="3" class="py-4 px-4 text-center text-red-500">Error: Could not load FASTAs.</td></tr>`;
                 }
 
             } catch (error) {
@@ -205,7 +266,6 @@
             }
         }
 
-        // Run analysis on load
         runAnalysis();
     </script>
 </body>
