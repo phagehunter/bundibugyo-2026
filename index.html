@@ -114,6 +114,77 @@
                 </div>
             </div>
         </section>
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8M3 18h18M13 8h8M13 3h8M3 8h8M3 3h8"></path></svg>
+                <h2 class="text-xl font-bold text-slate-800">Spatiotemporal Epidemic Curve</h2>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-slate-600 mb-4">Tracking the collection dates of sequenced samples. Note: This represents sequencing effort, which may lag behind actual epidemiological case counts.</p>
+                <div class="h-64 w-full">
+                    <canvas id="epiCurveChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <h2 class="text-xl font-bold text-slate-800">Sequence Quality Profiler</h2>
+                </div>
+                <div class="p-6">
+                    <table class="min-w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b"><th class="py-2">Variant</th><th class="py-2">Avg Length</th><th class="py-2">Avg Ambiguity (N%)</th></tr>
+                        </thead>
+                        <tbody id="quality-tbody" class="divide-y divide-slate-100 font-mono text-slate-700">
+                            <tr><td colspan="3" class="py-4 text-center">Calculating...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                    <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z"></path></svg>
+                    <h2 class="text-xl font-bold text-slate-800">GC Content & Composition</h2>
+                </div>
+                <div class="p-6">
+                    <table class="min-w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b"><th class="py-2">Variant</th><th class="py-2">GC Content (%)</th><th class="py-2">AT Content (%)</th></tr>
+                        </thead>
+                        <tbody id="composition-tbody" class="divide-y divide-slate-100 font-mono text-slate-700">
+                            <tr><td colspan="3" class="py-4 text-center">Calculating...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                    <svg class="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"></path></svg>
+                    <h2 class="text-xl font-bold text-slate-800">Mutational Spectrum (BDBV)</h2>
+                </div>
+                <div class="p-6">
+                    <p class="text-xs text-slate-500 mb-4">Transition (A↔G, C↔T) vs Transversion rates within the BDBV alignment.</p>
+                    <div class="h-40 w-full"><canvas id="mutationChart"></canvas></div>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"></path></svg>
+                    <h2 class="text-xl font-bold text-slate-800">BDBV Diversity Index</h2>
+                </div>
+                <div class="p-6 flex flex-col items-center justify-center h-full">
+                    <div id="diversity-score" class="text-5xl font-extrabold text-indigo-600 mb-2">--</div>
+                    <p class="text-sm text-slate-600 text-center">Unique 15-mers per sequence.<br>Higher scores indicate rapid viral divergence.</p>
+                </div>
+            </section>
+        </div>
 
     </main>
 
@@ -305,7 +376,102 @@
                         matrixHTML += `</tr>`;
                     }
                     document.getElementById('matrix-tbody').innerHTML = matrixHTML;
+// --- 4. Epicurve Generation ---
+                    const dateCounts = {};
+                    allMeta.forEach(m => {
+                        if (m.date && m.date !== 'Unknown' && m.date !== '?') {
+                            const monthYear = m.date.substring(0, 7); // Rough grouping by YYYY-MM
+                            dateCounts[monthYear] = (dateCounts[monthYear] || 0) + 1;
+                        }
+                    });
+                    const sortedDates = Object.keys(dateCounts).sort();
+                    const epicurveData = sortedDates.map(d => dateCounts[d]);
+                    
+                    new Chart(document.getElementById('epiCurveChart').getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: sortedDates,
+                            datasets: [{
+                                label: 'Sequences Collected',
+                                data: epicurveData,
+                                backgroundColor: 'rgba(234, 88, 12, 0.7)',
+                                borderColor: 'rgb(234, 88, 12)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
 
+                    // --- 5. Sequence Quality & Composition Analytics ---
+                    const analyzeStats = (seqs) => {
+                        let totalLen = 0, totalN = 0, gCount = 0, cCount = 0, aCount = 0, tCount = 0;
+                        seqs.forEach(s => {
+                            totalLen += s.seq.length;
+                            for(let i=0; i<s.seq.length; i++) {
+                                const base = s.seq[i];
+                                if (base === 'N') totalN++;
+                                else if (base === 'G') gCount++;
+                                else if (base === 'C') cCount++;
+                                else if (base === 'A') aCount++;
+                                else if (base === 'T') tCount++;
+                            }
+                        });
+                        const validBases = gCount + cCount + aCount + tCount;
+                        return {
+                            avgLen: (totalLen / seqs.length).toFixed(0),
+                            nPercent: ((totalN / totalLen) * 100).toFixed(2),
+                            gcPercent: (((gCount + cCount) / validBases) * 100).toFixed(2),
+                            atPercent: (((aCount + tCount) / validBases) * 100).toFixed(2)
+                        };
+                    };
+
+                    const bdbvStats = analyzeStats(seqBDBV);
+                    const sudvStats = analyzeStats(seqSUDV);
+                    const ebovStats = analyzeStats(seqEBOV);
+
+                    document.getElementById('quality-tbody').innerHTML = `
+                        <tr><td class="py-2">BDBV</td><td>${bdbvStats.avgLen} bp</td><td class="${bdbvStats.nPercent > 5 ? 'text-red-600' : 'text-green-600'}">${bdbvStats.nPercent}%</td></tr>
+                        <tr><td class="py-2">SUDV</td><td>${sudvStats.avgLen} bp</td><td>${sudvStats.nPercent}%</td></tr>
+                        <tr><td class="py-2">EBOV</td><td>${ebovStats.avgLen} bp</td><td>${ebovStats.nPercent}%</td></tr>
+                    `;
+
+                    document.getElementById('composition-tbody').innerHTML = `
+                        <tr><td class="py-2">BDBV</td><td>${bdbvStats.gcPercent}%</td><td>${bdbvStats.atPercent}%</td></tr>
+                        <tr><td class="py-2">SUDV</td><td>${sudvStats.gcPercent}%</td><td>${sudvStats.atPercent}%</td></tr>
+                        <tr><td class="py-2">EBOV</td><td>${ebovStats.gcPercent}%</td><td>${ebovStats.atPercent}%</td></tr>
+                    `;
+
+                    // --- 6. Mutational Spectrum (Transitions vs Transversions) ---
+                    // Proxy calculation comparing first two BDBV sequences if multiple exist
+                    let transitions = 0, transversions = 0;
+                    if (seqBDBV.length > 1) {
+                        const s1 = seqBDBV[0].seq, s2 = seqBDBV[1].seq;
+                        for(let i=0; i<Math.min(s1.length, s2.length); i++) {
+                            const b1 = s1[i], b2 = s2[i];
+                            if (b1 !== b2 && b1 !== 'N' && b2 !== 'N' && b1 !== '-' && b2 !== '-') {
+                                const pair = b1+b2;
+                                if (['AG','GA','CT','TC'].includes(pair)) transitions++;
+                                else transversions++;
+                            }
+                        }
+                    }
+                    new Chart(document.getElementById('mutationChart').getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Transitions', 'Transversions'],
+                            datasets: [{
+                                data: [transitions || 1, transversions || 1], // fallback to 1 to render chart if seq identical
+                                backgroundColor: ['#ec4899', '#f472b6']
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+
+                    // --- 7. Intra-Outbreak Diversity Index ---
+                    const allBDBVKmers = new Set();
+                    seqBDBV.forEach(s => { for(let kmer of extractKmers(s.seq, 15)) allBDBVKmers.add(kmer); });
+                    const diversityScore = (allBDBVKmers.size / seqBDBV.length).toFixed(0);
+                    document.getElementById('diversity-score').innerText = diversityScore;
                 } else {
                     document.getElementById('signature-tbody').innerHTML = `<tr><td colspan="2" class="py-4 text-center text-red-500">FASTA data missing.</td></tr>`;
                     document.getElementById('matrix-tbody').innerHTML = `<tr><td colspan="4" class="py-4 text-center text-red-500">FASTA data missing.</td></tr>`;
