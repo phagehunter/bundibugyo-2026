@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ebolavirus Genomic Sequence & Metadata Comparator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans leading-relaxed flex flex-col min-h-screen">
+
+    <header class="bg-slate-900 text-white py-8 text-center shadow-md">
+        <h1 class="text-3xl font-bold">Ebolavirus Genomic Analysis</h1>
+        <p class="mt-2 text-slate-300">Live Browser-Based Analysis of BDBV, SUDV, and EBOV</p>
+    </header>
+
+    <main class="flex-grow max-w-6xl mx-auto w-full my-8 px-6 space-y-8">
+        
+        <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold text-blue-800 border-b pb-2 mb-4">Analyzed Sequences & Attribution</h2>
+            <p class="text-slate-600 mb-4">Metadata for the primary sequences used in this comparison. We gratefully acknowledge the submitting laboratories for generating this data.</p>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-100 border-b-2 border-slate-300">
+                            <th class="py-2 px-4 font-semibold">Variant</th>
+                            <th class="py-2 px-4 font-semibold">Strain Name</th>
+                            <th class="py-2 px-4 font-semibold">Collection Date</th>
+                            <th class="py-2 px-4 font-semibold">Location</th>
+                            <th class="py-2 px-4 font-semibold">Submitting Lab</th>
+                        </tr>
+                    </thead>
+                    <tbody id="metadata-table" class="divide-y divide-slate-200">
+                        <tr>
+                            <td colspan="5" class="py-4 px-4 text-center text-slate-500" id="meta-loading-msg">Loading metadata...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold text-blue-800 border-b pb-2 mb-4">Pairwise Sequence Identity</h2>
+            <p class="text-slate-600 mb-4">Calculates the percentage of identical nucleotides between the aligned consensus sequences, ignoring gaps and ambiguous reads.</p>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 border-b-2 border-slate-300">
+                            <th class="py-3 px-4 font-semibold">Comparison</th>
+                            <th class="py-3 px-4 font-semibold">Identity (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-table" class="divide-y divide-slate-200">
+                        <tr>
+                            <td colspan="2" class="py-4 px-4 text-center text-slate-500" id="seq-loading-msg">Loading and analyzing sequences...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-200 border-t border-slate-300 p-6">
+        <div class="max-w-6xl mx-auto text-sm text-slate-700 space-y-2">
+            <h3 class="font-bold">Data Acknowledgment</h3>
+            <p>We confirm that we have adhered to the Data Use Terms of Pathoplexus.</p>
+            <p>The sequence data analyzed directly in this application utilizes Restricted-Use and Open Data. Data critical to our direct comparisons constitute our <strong>Focal Set</strong>, while historical sequences used for broader contextualization represent our <strong>Background Set</strong>.</p>
+            <p>Please review our <a href="ATTRIBUTION.md" class="text-blue-600 hover:underline font-semibold">ATTRIBUTION.md</a> for full Submitting Group credits and SeqSet DOIs.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- FASTA Parsing Logic ---
+        function parseFasta(text) {
+            const sequences = [];
+            let currentSeq = "";
+            let currentId = "";
+            text.split('\n').forEach(line => {
+                line = line.trim();
+                if (line.startsWith(">")) {
+                    if (currentId) sequences.push({ id: currentId, seq: currentSeq });
+                    currentId = line.substring(1);
+                    currentSeq = "";
+                } else {
+                    currentSeq += line.toUpperCase();
+                }
+            });
+            if (currentId) sequences.push({ id: currentId, seq: currentSeq });
+            return sequences;
+        }
+
+        function calculateIdentity(seq1, seq2) {
+            let matches = 0;
+            let validLength = 0;
+            const minLength = Math.min(seq1.length, seq2.length);
+            for (let i = 0; i < minLength; i++) {
+                const a = seq1[i], b = seq2[i];
+                if (a !== '-' && b !== '-' && a !== 'N' && b !== 'N') {
+                    validLength++;
+                    if (a === b) matches++;
+                }
+            }
+            return validLength === 0 ? "0.00" : ((matches / validLength) * 100).toFixed(2);
+        }
+
+        // --- TSV Parsing Logic ---
+        function parseTSV(text) {
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            if (lines.length < 2) return null;
+            
+            const headers = lines[0].split('\t').map(h => h.trim().toLowerCase());
+            const firstRow = lines[1].split('\t');
+            
+            // Map common metadata columns to indices
+            const getCol = (possibleNames) => {
+                for (let name of possibleNames) {
+                    const idx = headers.findIndex(h => h.includes(name));
+                    if (idx !== -1) return firstRow[idx];
+                }
+                return "Unknown";
+            };
+
+            return {
+                strain: getCol(['strain', 'name', 'virus_name']),
+                date: getCol(['date', 'collection_date']),
+                location: getCol(['country', 'region', 'location']),
+                lab: getCol(['submitting_lab', 'origin_lab', 'authors', 'institution'])
+            };
+        }
+
+        async function runAnalysis() {
+            try {
+                // 1. Fetch Data
+                const [resBDBV_seq, resSUDV_seq, resEBOV_seq, resBDBV_meta, resSUDV_meta, resEBOV_meta] = await Promise.allSettled([
+                    fetch('data/ebola-bdbv_aligned-nuc_2026-05-18T1850.fasta'),
+                    fetch('data/ebola-sudan_aligned-nuc_2026-05-18T1850.fasta'),
+                    fetch('data/ebola-zaire_aligned-nuc_2026-05-18T1851.fasta'),
+                    fetch('data/ebola-bdbv_metadata_2026-05-18T1849.tsv'),
+                    fetch('data/ebola-sudan_metadata_2026-05-18T1849.tsv'),
+                    fetch('data/ebola-zaire_metadata.tsv') // Assumed filename for your future upload
+                ]);
+
+                // 2. Process Metadata
+                const metaTable = document.getElementById('metadata-table');
+                let metaHTML = "";
+
+                const processMeta = async (res, variantName) => {
+                    if (res.status === 'fulfilled' && res.value.ok) {
+                        const metaData = parseTSV(await res.value.text());
+                        if (metaData) {
+                            return `<tr>
+                                <td class="py-2 px-4 font-semibold text-slate-800">${variantName}</td>
+                                <td class="py-2 px-4 font-mono text-xs text-slate-600">${metaData.strain}</td>
+                                <td class="py-2 px-4">${metaData.date}</td>
+                                <td class="py-2 px-4">${metaData.location}</td>
+                                <td class="py-2 px-4 text-blue-800 italic">${metaData.lab}</td>
+                            </tr>`;
+                        }
+                    }
+                    return `<tr><td class="py-2 px-4 font-semibold text-slate-800">${variantName}</td><td colspan="4" class="py-2 px-4 text-slate-400 italic">Metadata file missing or unreadable</td></tr>`;
+                };
+
+                metaHTML += await processMeta(resBDBV_meta, "Bundibugyo (BDBV)");
+                metaHTML += await processMeta(resSUDV_meta, "Sudan (SUDV)");
+                metaHTML += await processMeta(resEBOV_meta, "Zaire (EBOV)");
+                metaTable.innerHTML = metaHTML;
+
+                // 3. Process Sequences
+                const parseSeq = async (res) => {
+                    if (res.status === 'fulfilled' && res.value.ok) {
+                        return parseFasta(await res.value.text())[0];
+                    }
+                    return null;
+                };
+
+                const seqBDBV = await parseSeq(resBDBV_seq);
+                const seqSUDV = await parseSeq(resSUDV_seq);
+                const seqEBOV = await parseSeq(resEBOV_seq);
+
+                const seqTable = document.getElementById('results-table');
+                
+                if (seqBDBV && seqSUDV && seqEBOV) {
+                    seqTable.innerHTML = `
+                        <tr>
+                            <td class="py-3 px-4 text-slate-800">BDBV vs. SUDV</td>
+                            <td class="py-3 px-4 font-mono text-blue-600 font-semibold">${calculateIdentity(seqBDBV.seq, seqSUDV.seq)}%</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 text-slate-800">BDBV vs. EBOV (Zaire)</td>
+                            <td class="py-3 px-4 font-mono text-blue-600 font-semibold">${calculateIdentity(seqBDBV.seq, seqEBOV.seq)}%</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 text-slate-800">SUDV vs. EBOV (Zaire)</td>
+                            <td class="py-3 px-4 font-mono text-blue-600 font-semibold">${calculateIdentity(seqSUDV.seq, seqEBOV.seq)}%</td>
+                        </tr>
+                    `;
+                } else {
+                    seqTable.innerHTML = `<tr><td colspan="2" class="py-4 px-4 text-center text-red-500">Error: Could not load one or more FASTA files. Check file paths.</td></tr>`;
+                }
+
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // Run analysis on load
+        runAnalysis();
+    </script>
+</body>
+</html>
