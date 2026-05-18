@@ -2,7 +2,7 @@
 
 This repository hosts a lightweight, browser-based educational tool to analyze and compare Ebolavirus variants (Bundibugyo, Sudan, Zaire) associated with the 2025/2026 outbreaks. 
 
-The application is built using vanilla HTML, JavaScript, and Tailwind CSS. It is designed to be hosted seamlessly via **GitHub Pages** and performs all FASTA sequence parsing and TSV metadata extraction directly in the user's browser, requiring no backend server.
+The application is built using vanilla HTML, JavaScript, and Tailwind CSS. It is designed to be hosted via **GitHub Pages** and performs all FASTA sequence parsing and TSV metadata extraction directly in the user's browser, requiring no backend server.
 
 ## Repository Structure
 
