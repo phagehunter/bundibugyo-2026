@@ -1,0 +1,27 @@
+# Ebolavirus Genomic Analytics
+
+> A browser-based educational tool by Curtis Hoffmann that compares Bundibugyo (BDBV), Sudan (SUDV) and Zaire (EBOV) ebolavirus genomes from the 2025–2026 outbreaks. All FASTA parsing and metadata extraction run in the visitor's browser; there is no backend.
+
+Site: https://curtishoffmann.com/bundibugyo-2026/
+Source: https://github.com/phagehunter/bundibugyo-2026
+
+## What the page shows
+
+- Sequence submissions and laboratory attribution, read from the metadata tables.
+- The filovirus proteome and the expected cross-species divergence per protein (NP, VP35, VP40, GP, VP30, VP24, L).
+- Diagnostic genomic signatures specific to BDBV, found with a 21-base k-mer scan.
+- An alignment-free genomic distance matrix across the three species.
+- A spatiotemporal epidemic curve from sample collection dates and locations.
+- A sequence quality profiler, GC content and composition, the BDBV mutational spectrum and a BDBV diversity index.
+
+## Data
+
+- Source: Pathoplexus (https://pathoplexus.org), aligned nucleotide FASTA files and metadata TSVs downloaded 18 May 2026, in the repository's `data/` folder: 3 BDBV, 1 SUDV and 52 EBOV sequences.
+- The Pathoplexus Data Use Terms apply. Focal-set and background-set credits and SeqSet DOIs are in ATTRIBUTION.md: https://github.com/phagehunter/bundibugyo-2026/blob/main/ATTRIBUTION.md
+- The tool is for education, not for clinical or public-health decisions.
+
+## Contact
+
+- Author: Curtis Hoffmann, https://curtishoffmann.com/
+- Issues: https://github.com/phagehunter/bundibugyo-2026/issues
+- Sitemap: https://curtishoffmann.com/bundibugyo-2026/sitemap.xml

@@ -4,8 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ebolavirus Advanced Genomic Analytics</title>
+    <meta name="description" content="Bundibugyo, Sudan and Zaire ebolavirus genomes from the 2025–2026 outbreaks, compared in the browser: distances, signatures, GC content and an epidemic curve.">
+    <meta name="author" content="Curtis Hoffmann">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="canonical" href="https://curtishoffmann.com/bundibugyo-2026/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ebolavirus Genomic Analytics">
+    <meta property="og:title" content="Ebolavirus Advanced Genomic Analytics">
+    <meta property="og:description" content="Bundibugyo, Sudan and Zaire ebolavirus genomes from the 2025–2026 outbreaks, compared in the browser: distances, signatures, GC content and an epidemic curve.">
+    <meta property="og:url" content="https://curtishoffmann.com/bundibugyo-2026/">
+    <meta property="og:image" content="https://curtishoffmann.com/bundibugyo-2026/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ebolavirus Genomic Analytics: Bundibugyo, Sudan and Zaire genomes compared in the browser">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Ebolavirus Advanced Genomic Analytics">
+    <meta name="twitter:description" content="Bundibugyo, Sudan and Zaire ebolavirus genomes from the 2025–2026 outbreaks, compared in the browser: distances, signatures, GC content and an epidemic curve.">
+    <meta name="twitter:image" content="https://curtishoffmann.com/bundibugyo-2026/assets/og-image.png">
+    <script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebApplication",
+   "@id": "https://curtishoffmann.com/bundibugyo-2026/",
+   "url": "https://curtishoffmann.com/bundibugyo-2026/",
+   "name": "Ebolavirus Genomic Sequence and Metadata Comparator",
+   "alternateName": "Ebolavirus Advanced Genomic Analytics",
+   "description": "Bundibugyo, Sudan and Zaire ebolavirus genomes from the 2025–2026 outbreaks, compared in the browser: distances, signatures, GC content and an epidemic curve.",
+   "inLanguage": "en",
+   "applicationCategory": "EducationalApplication",
+   "operatingSystem": "Any (web browser)",
+   "isAccessibleForFree": true,
+   "author": {
+    "@type": "Person",
+    "name": "Curtis Hoffmann",
+    "url": "https://curtishoffmann.com/"
+   },
+   "isPartOf": {
+    "@type": "WebSite",
+    "name": "Curtis Hoffmann",
+    "url": "https://curtishoffmann.com/"
+   },
+   "image": "https://curtishoffmann.com/bundibugyo-2026/assets/og-image.png",
+   "isBasedOn": {
+    "@type": "Dataset",
+    "name": "Pathoplexus ebolavirus sequences and metadata (snapshot 18 May 2026)",
+    "url": "https://pathoplexus.org"
+   }
+  },
+  {
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "Curtis Hoffmann",
+     "item": "https://curtishoffmann.com/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "Ebolavirus Genomic Analytics",
+     "item": "https://curtishoffmann.com/bundibugyo-2026/"
+    }
+   ]
+  }
+ ]
+}
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Custom scrollbar for data panels */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -111,7 +181,7 @@
                         </table>
                     </div>
                     <div class="bg-slate-50 p-5 rounded-lg border flex flex-col justify-center">
-                        <h4 class="font-bold text-slate-700 mb-2">Algorithm Stats</h4>
+                        <h3 class="font-bold text-slate-700 mb-2">Algorithm Stats</h3>
                         <ul class="text-sm text-slate-600 space-y-2" id="algo-stats">
                             <li>K-mer Size: 21bp</li>
                             <li>Processing...</li>
@@ -223,9 +293,12 @@
             <h3 class="font-bold text-white text-base">Pathoplexus Data Acknowledgment</h3>
             <p>We confirm that we have adhered to the Data Use Terms of Pathoplexus.</p>
             <p>The sequence data analyzed utilizes Restricted-Use and Open Data. Data directly compared in the tables above constitute our <strong>Focal Set</strong>. Sequences used purely for algorithmic background weighting represent our <strong>Background Set</strong>.</p>
-            <p>Please review <a href="ATTRIBUTION.md" class="text-blue-400 hover:text-blue-300 underline font-semibold">ATTRIBUTION.md</a> for associated SeqSet DOIs.</p>        </div>
+            <p>Please review <a href="https://github.com/phagehunter/bundibugyo-2026/blob/main/ATTRIBUTION.md" class="text-blue-400 hover:text-blue-300 underline font-semibold">ATTRIBUTION.md</a> for associated SeqSet DOIs.</p>
+            <p>Made by <a href="https://curtishoffmann.com/" class="text-blue-400 hover:text-blue-300 underline">Curtis Hoffmann</a> · <a href="https://github.com/phagehunter/bundibugyo-2026" class="text-blue-400 hover:text-blue-300 underline">Source on GitHub</a></p>
+        </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // --- 1. Proteome Chart Initialization ---
         const ptCtx = document.getElementById('proteomeChart').getContext('2d');
